@@ -16,7 +16,7 @@ func main() {
 	http.Handle("/", router)
 
 	// todo: add wire impl
-	frontendService := frontend.NewService(eventbus.NewService())
+	frontendService := frontend.NewService(eventbus.NewService(nil))
 
 	router.HandleFunc("/publish", frontendService.PublishEvent).Methods("POST")
 

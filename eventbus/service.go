@@ -3,13 +3,17 @@ package eventbus
 import (
 	"fmt"
 	"persistent-queue/api/event"
+	"persistent-queue/eventbus/dao"
 )
 
 type Service struct {
+	eventsDao dao.EventsDao
 }
 
-func NewService() *Service {
-	return &Service{}
+func NewService(eventsDao dao.EventsDao) *Service {
+	return &Service{
+		eventsDao: eventsDao,
+	}
 }
 
 func (s *Service) EnqueueEvent(event *event.Event) error {
