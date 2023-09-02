@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
+	"persistent-queue/eventbus"
 	"persistent-queue/frontend"
 )
 
@@ -14,9 +15,12 @@ func main() {
 	router := mux.NewRouter()
 	http.Handle("/", router)
 
-	router.HandleFunc("/publish", frontend.PublishEvent).Methods("POST")
+	// todo: add wire impl
+	frontendService := frontend.NewService(eventbus.NewService())
 
-	router.HandleFunc("/healthcheck", frontend.HealthCheck).Methods("GET")
+	router.HandleFunc("/publish", frontendService.PublishEvent).Methods("POST")
+
+	router.HandleFunc("/healthcheck", frontendService.HealthCheck).Methods("GET")
 
 	fmt.Println("starting server on port 8080")
 	err := http.ListenAndServe(":8080", nil)
