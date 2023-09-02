@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/redis/go-redis/v9"
 	"net/http"
 	"persistent-queue/eventbus"
+	eventsCache "persistent-queue/eventbus/dao/redis"
 	"persistent-queue/frontend"
 )
 
@@ -16,7 +18,13 @@ func main() {
 	http.Handle("/", router)
 
 	// todo: add wire impl
-	frontendService := frontend.NewService(eventbus.NewService(nil))
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+
+	frontendService := frontend.NewService(eventbus.NewService(eventsCache.NewEventsRedisCache(redisClient)))
 
 	router.HandleFunc("/publish", frontendService.PublishEvent).Methods("POST")
 
