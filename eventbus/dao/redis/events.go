@@ -21,7 +21,7 @@ func (c *EventsRedisCache) CreateEvent(event *eventModel.Event) error {
 	if err != nil {
 		return err
 	}
-	err = c.redisClient.Set(context.Background(), event.Name, string(bytes), 5*time.Minute).Err()
+	err = c.redisClient.LPush(context.Background(), "queue1", string(bytes), 5*time.Minute).Err()
 	if err != nil {
 		return err
 	}
@@ -29,7 +29,7 @@ func (c *EventsRedisCache) CreateEvent(event *eventModel.Event) error {
 }
 
 func (c *EventsRedisCache) GetEvent(eventName string) (*eventModel.Event, error) {
-	eventStr, err := c.redisClient.Get(context.Background(), eventName).Result()
+	eventStr, err := c.redisClient.RPop(context.Background(), "queue1").Result()
 	if err != nil {
 		return nil, err
 	}
@@ -42,6 +42,14 @@ func (c *EventsRedisCache) GetEvent(eventName string) (*eventModel.Event, error)
 }
 
 func (c *EventsRedisCache) UpdateEvent(event *eventModel.Event) error {
+	bytes, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+	err = c.redisClient.RPush(context.Background(), "queue1", string(bytes), 5*time.Minute).Err()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
