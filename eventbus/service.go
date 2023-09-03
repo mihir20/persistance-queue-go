@@ -23,10 +23,14 @@ func (s *Service) EnqueueEvent(event *event.Event) error {
 	if err != nil {
 		log.Printf("error saving event, err: %s\n", err.Error())
 	}
-	savedEvent, err := s.eventsDao.GetEvent(event.Name)
-	if err != nil {
-		log.Printf("error saving event, err: %s\n", err.Error())
-	}
-	fmt.Printf("event saved in the bus, name: %s\n", savedEvent.Name)
 	return err
+}
+
+func (s *Service) GetEventToProcess() (*event.Event, error) {
+	savedEvent, err := s.eventsDao.GetEvent("")
+	if err != nil {
+		log.Printf("error getting event, err: %s\n", err.Error())
+		return nil, err
+	}
+	return savedEvent, nil
 }
