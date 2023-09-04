@@ -42,7 +42,10 @@ func (s *Service) GetTaskQueueName() taskqueue.TaskQueue {
 
 func (s *Service) processEventConsumption(err error, event *eventbus.PassengerEvent) {
 	if err == nil || errors.IsPermanentError(err) {
-		// TODO: delete event
+		deleteErr := s.eventBusService.DequeueEventFromTaskQueue(s.GetTaskQueueName(), event)
+		if deleteErr != nil {
+			log.Printf("failed to delete event from queue, err:%s", deleteErr.Error())
+		}
 		return
 	}
 	if errors.IsTransientError(err) {

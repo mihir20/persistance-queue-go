@@ -67,6 +67,15 @@ func (c *EventsRedisCache) UpdateEvent(taskQueue taskqueue.TaskQueue, event *eve
 	return nil
 }
 
-func (c *EventsRedisCache) DeleteEvent(event *eventbus.PassengerEvent) error {
+func (c *EventsRedisCache) DeleteEvent(taskQueue taskqueue.TaskQueue, passenger *eventbus.PassengerEvent) error {
+	ctx := context.Background()
+	bytes, err := json.Marshal(passenger)
+	if err != nil {
+		return err
+	}
+	err = c.redisClient.ZRem(ctx, string(taskQueue), bytes).Err()
+	if err != nil {
+		return err
+	}
 	return nil
 }

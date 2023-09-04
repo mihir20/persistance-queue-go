@@ -46,3 +46,12 @@ func (s *Service) GetEventToProcess(taskQueue taskqueue.TaskQueue) (*eventbus.Pa
 	}
 	return savedEvent, nil
 }
+
+func (s *Service) DequeueEventFromTaskQueue(taskQueue taskqueue.TaskQueue, passengerEvent *eventbus.PassengerEvent) error {
+	err := s.eventsDao.DeleteEvent(taskQueue, passengerEvent)
+	if err != nil {
+		log.Printf("error deleting event, err: %s\n", err.Error())
+		return err
+	}
+	return nil
+}

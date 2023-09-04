@@ -9,5 +9,5 @@ type EventsDao interface {
 	CreateEvent(event *eventbus.PassengerEvent, taskQueues []taskqueue.TaskQueue) error
 	GetEvent(taskQueue taskqueue.TaskQueue) (*eventbus.PassengerEvent, error)
 	UpdateEvent(taskQueue taskqueue.TaskQueue, updatedPassengerEvent *eventbus.PassengerEvent) error
-	DeleteEvent(event *eventbus.PassengerEvent) error
+	DeleteEvent(taskQueue taskqueue.TaskQueue, event *eventbus.PassengerEvent) error
 }
