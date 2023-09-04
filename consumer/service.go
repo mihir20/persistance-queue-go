@@ -5,6 +5,7 @@ import (
 	eventModel "persistent-queue/api/event"
 	"persistent-queue/api/eventbus"
 	"persistent-queue/api/taskqueue"
+	"persistent-queue/pkg/errors"
 	taskqueueNs "persistent-queue/pkg/taskqueue"
 )
 
@@ -26,10 +27,7 @@ func (s *Service) PollEventsQueue() error {
 	}
 	if event != nil {
 		err = s.ConsumeEvent(event)
-		if err != nil {
-			log.Printf("failed to consume event, err:%s\n", err.Error())
-			return err
-		}
+		s.processEventConsumption(err, event)
 	}
 	return nil
 }
@@ -41,4 +39,17 @@ func (s *Service) ConsumeEvent(event *eventModel.Event) error {
 
 func (s *Service) GetTaskQueueName() taskqueue.TaskQueue {
 	return taskqueueNs.ConsumerTaskQueue
+}
+
+func (s *Service) processEventConsumption(err error, event *eventModel.Event) {
+	if err == nil || errors.IsPermanentError(err) {
+		// TODO: delete event
+		return
+	}
+	if errors.IsTransientError(err) {
+		// TODO: retry event
+		return
+	}
+
+	log.Fatalf("unknown error from consumer, err: %s", err.Error())
 }
