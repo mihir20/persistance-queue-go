@@ -2,7 +2,6 @@ package consumer
 
 import (
 	"log"
-	eventModel "persistent-queue/api/event"
 	"persistent-queue/api/eventbus"
 	"persistent-queue/api/taskqueue"
 	"persistent-queue/pkg/errors"
@@ -32,8 +31,8 @@ func (s *Service) PollEventsQueue() error {
 	return nil
 }
 
-func (s *Service) ConsumeEvent(event *eventModel.Event) error {
-	log.Printf("consuming event %s\n", event.Name)
+func (s *Service) ConsumeEvent(event *eventbus.PassengerEvent) error {
+	log.Printf("consuming event %s\n", event.Event.Name)
 	return nil
 }
 
@@ -41,7 +40,7 @@ func (s *Service) GetTaskQueueName() taskqueue.TaskQueue {
 	return taskqueueNs.ConsumerTaskQueue
 }
 
-func (s *Service) processEventConsumption(err error, event *eventModel.Event) {
+func (s *Service) processEventConsumption(err error, event *eventbus.PassengerEvent) {
 	if err == nil || errors.IsPermanentError(err) {
 		// TODO: delete event
 		return

@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"log"
 	"persistent-queue/api/event"
+	"persistent-queue/api/eventbus"
 	"persistent-queue/api/taskqueue"
 	"persistent-queue/eventbus/dao"
 	taskqueueNs "persistent-queue/pkg/taskqueue"
+	"time"
 )
 
 type Service struct {
@@ -25,14 +27,18 @@ func NewService(eventsDao dao.EventsDao) *Service {
 
 func (s *Service) EnqueueEvent(event *event.Event) error {
 	fmt.Printf("enqueuing new event in the bus, name: %s\n", event.Name)
-	err := s.eventsDao.CreateEvent(event, s.registeredTaskQueues)
+	err := s.eventsDao.CreateEvent(&eventbus.PassengerEvent{
+		Event:         event,
+		RetryAttempts: 0,
+		EventTime:     time.Now(),
+	}, s.registeredTaskQueues)
 	if err != nil {
 		log.Printf("error saving event, err: %s\n", err.Error())
 	}
 	return err
 }
 
-func (s *Service) GetEventToProcess(taskQueue taskqueue.TaskQueue) (*event.Event, error) {
+func (s *Service) GetEventToProcess(taskQueue taskqueue.TaskQueue) (*eventbus.PassengerEvent, error) {
 	savedEvent, err := s.eventsDao.GetEvent(taskQueue)
 	if err != nil {
 		log.Printf("error getting event, err: %s\n", err.Error())

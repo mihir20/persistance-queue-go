@@ -7,5 +7,5 @@ import (
 
 type IService interface {
 	EnqueueEvent(event *event.Event) error
-	GetEventToProcess(queue taskqueue.TaskQueue) (*event.Event, error)
+	GetEventToProcess(queue taskqueue.TaskQueue) (*PassengerEvent, error)
 }

@@ -6,9 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/redis/go-redis/v9"
-	eventModel "persistent-queue/api/event"
+	"persistent-queue/api/eventbus"
 	"persistent-queue/api/taskqueue"
-	"time"
 )
 
 type EventsRedisCache struct {
@@ -19,9 +18,9 @@ func NewEventsRedisCache(redisClient *redis.Client) *EventsRedisCache {
 	return &EventsRedisCache{redisClient: redisClient}
 }
 
-func (c *EventsRedisCache) CreateEvent(event *eventModel.Event, taskQueues []taskqueue.TaskQueue) error {
+func (c *EventsRedisCache) CreateEvent(passenger *eventbus.PassengerEvent, taskQueues []taskqueue.TaskQueue) error {
 	ctx := context.Background()
-	bytes, err := json.Marshal(event)
+	bytes, err := json.Marshal(passenger)
 	if err != nil {
 		return err
 	}
@@ -36,7 +35,7 @@ func (c *EventsRedisCache) CreateEvent(event *eventModel.Event, taskQueues []tas
 	return nil
 }
 
-func (c *EventsRedisCache) GetEvent(taskQueue taskqueue.TaskQueue) (*eventModel.Event, error) {
+func (c *EventsRedisCache) GetEvent(taskQueue taskqueue.TaskQueue) (*eventbus.PassengerEvent, error) {
 	eventStr, err := c.redisClient.RPop(context.Background(), string(taskQueue)).Result()
 	if err != nil && !errors.Is(err, redis.Nil) {
 		return nil, fmt.Errorf("error while fetching event from queue, %w", err)
@@ -44,7 +43,7 @@ func (c *EventsRedisCache) GetEvent(taskQueue taskqueue.TaskQueue) (*eventModel.
 	if errors.Is(err, redis.Nil) || len(eventStr) == 0 {
 		return nil, nil
 	}
-	event := &eventModel.Event{}
+	event := &eventbus.PassengerEvent{}
 	fmt.Println(eventStr)
 	err = json.Unmarshal([]byte(eventStr), event)
 	if err != nil {
@@ -53,18 +52,18 @@ func (c *EventsRedisCache) GetEvent(taskQueue taskqueue.TaskQueue) (*eventModel.
 	return event, nil
 }
 
-func (c *EventsRedisCache) UpdateEvent(taskQueue taskqueue.TaskQueue, event *eventModel.Event) error {
+func (c *EventsRedisCache) UpdateEvent(taskQueue taskqueue.TaskQueue, event *eventbus.PassengerEvent) error {
 	bytes, err := json.Marshal(event)
 	if err != nil {
 		return err
 	}
-	err = c.redisClient.RPush(context.Background(), string(taskQueue), string(bytes), 5*time.Minute).Err()
+	err = c.redisClient.RPush(context.Background(), string(taskQueue), string(bytes)).Err()
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *EventsRedisCache) DeleteEvent(event *eventModel.Event) error {
+func (c *EventsRedisCache) DeleteEvent(event *eventbus.PassengerEvent) error {
 	return nil
 }
