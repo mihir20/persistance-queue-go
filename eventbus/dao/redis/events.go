@@ -26,7 +26,10 @@ func (c *EventsRedisCache) CreateEvent(passenger *eventbus.PassengerEvent, taskQ
 	}
 	pipeline := c.redisClient.Pipeline()
 	for _, queue := range taskQueues {
-		pipeline.LPush(ctx, string(queue), string(bytes))
+		pipeline.ZAdd(ctx, string(queue), redis.Z{
+			Score:  float64(passenger.EventTime.Unix()),
+			Member: bytes,
+		})
 	}
 	_, err = pipeline.Exec(ctx)
 	if err != nil {
@@ -36,7 +39,7 @@ func (c *EventsRedisCache) CreateEvent(passenger *eventbus.PassengerEvent, taskQ
 }
 
 func (c *EventsRedisCache) GetEvent(taskQueue taskqueue.TaskQueue) (*eventbus.PassengerEvent, error) {
-	eventStr, err := c.redisClient.RPop(context.Background(), string(taskQueue)).Result()
+	eventStr, err := c.redisClient.ZRange(context.Background(), string(taskQueue), 0, 0).Result()
 	if err != nil && !errors.Is(err, redis.Nil) {
 		return nil, fmt.Errorf("error while fetching event from queue, %w", err)
 	}
@@ -45,7 +48,7 @@ func (c *EventsRedisCache) GetEvent(taskQueue taskqueue.TaskQueue) (*eventbus.Pa
 	}
 	event := &eventbus.PassengerEvent{}
 	fmt.Println(eventStr)
-	err = json.Unmarshal([]byte(eventStr), event)
+	err = json.Unmarshal([]byte(eventStr[0]), event)
 	if err != nil {
 		return nil, fmt.Errorf("error while unmarshalling, eventStr: %s ,err: %w", eventStr, err)
 	}
