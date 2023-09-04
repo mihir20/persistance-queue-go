@@ -8,6 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"persistent-queue/api/eventbus"
 	"persistent-queue/api/taskqueue"
+	"time"
 )
 
 type EventsRedisCache struct {
@@ -38,31 +39,38 @@ func (c *EventsRedisCache) CreateEvent(passenger *eventbus.PassengerEvent, taskQ
 	return nil
 }
 
-func (c *EventsRedisCache) GetEvent(taskQueue taskqueue.TaskQueue) (*eventbus.PassengerEvent, error) {
-	eventStr, err := c.redisClient.ZRange(context.Background(), string(taskQueue), 0, 0).Result()
+func (c *EventsRedisCache) GetEvent(taskQueue taskqueue.TaskQueue) (*eventbus.PassengerEvent, int64, error) {
+	eventStr, err := c.redisClient.ZRangeWithScores(context.Background(), string(taskQueue), 0, 0).Result()
 	if err != nil && !errors.Is(err, redis.Nil) {
-		return nil, fmt.Errorf("error while fetching event from queue, %w", err)
+		return nil, 0, fmt.Errorf("error while fetching event from queue, %w", err)
 	}
 	if errors.Is(err, redis.Nil) || len(eventStr) == 0 {
-		return nil, nil
+		return nil, 0, nil
 	}
 	event := &eventbus.PassengerEvent{}
-	fmt.Println(eventStr)
-	err = json.Unmarshal([]byte(eventStr[0]), event)
+	err = json.Unmarshal([]byte(eventStr[0].Member.(string)), event)
 	if err != nil {
-		return nil, fmt.Errorf("error while unmarshalling, eventStr: %s ,err: %w", eventStr, err)
+		return nil, 0, fmt.Errorf("error while unmarshalling, eventStr: %v ,err: %w", eventStr, err)
 	}
-	return event, nil
+	return event, int64(eventStr[0].Score), nil
 }
 
-func (c *EventsRedisCache) UpdateEvent(taskQueue taskqueue.TaskQueue, event *eventbus.PassengerEvent) error {
-	bytes, err := json.Marshal(event)
+func (c *EventsRedisCache) UpdateEvent(taskQueue taskqueue.TaskQueue, oldPassenger, updatedPassengerEvent *eventbus.PassengerEvent, nextExecutionTime time.Time) error {
+	ctx := context.Background()
+	oldBytes, err := json.Marshal(oldPassenger)
 	if err != nil {
 		return err
 	}
-	err = c.redisClient.RPush(context.Background(), string(taskQueue), string(bytes)).Err()
+	newBytes, err := json.Marshal(updatedPassengerEvent)
+	pipeline := c.redisClient.Pipeline()
+	pipeline.ZRem(ctx, string(taskQueue), oldBytes)
+	pipeline.ZAdd(ctx, string(taskQueue), redis.Z{
+		Score:  float64(nextExecutionTime.Unix()),
+		Member: newBytes,
+	})
+	_, err = pipeline.Exec(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("error inserting multiple keys, err%w", err)
 	}
 	return nil
 }

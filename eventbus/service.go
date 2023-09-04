@@ -12,6 +12,7 @@ import (
 )
 
 type Service struct {
+	eventbus.IService
 	eventsDao            dao.EventsDao
 	registeredTaskQueues []taskqueue.TaskQueue
 }
@@ -39,16 +40,28 @@ func (s *Service) EnqueueEvent(event *event.Event) error {
 }
 
 func (s *Service) GetEventToProcess(taskQueue taskqueue.TaskQueue) (*eventbus.PassengerEvent, error) {
-	savedEvent, err := s.eventsDao.GetEvent(taskQueue)
+	savedEvent, executionTimestamp, err := s.eventsDao.GetEvent(taskQueue)
 	if err != nil {
 		log.Printf("error getting event, err: %s\n", err.Error())
 		return nil, err
+	}
+	if time.Now().Before(time.Unix(executionTimestamp, 0).UTC()) {
+		return nil, nil
 	}
 	return savedEvent, nil
 }
 
 func (s *Service) DequeueEventFromTaskQueue(taskQueue taskqueue.TaskQueue, passengerEvent *eventbus.PassengerEvent) error {
 	err := s.eventsDao.DeleteEvent(taskQueue, passengerEvent)
+	if err != nil {
+		log.Printf("error deleting event, err: %s\n", err.Error())
+		return err
+	}
+	return nil
+}
+
+func (s *Service) UpdatePassengerEvent(taskQueue taskqueue.TaskQueue, oldPassenger, newPassengerEvent *eventbus.PassengerEvent, nextExecutionTime time.Time) error {
+	err := s.eventsDao.UpdateEvent(taskQueue, oldPassenger, newPassengerEvent, nextExecutionTime)
 	if err != nil {
 		log.Printf("error deleting event, err: %s\n", err.Error())
 		return err

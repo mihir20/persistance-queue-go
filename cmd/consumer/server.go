@@ -22,7 +22,7 @@ func main() {
 
 	// Every starts the job immediately and then runs at the
 	// specified interval
-	_, err := s.Every(5).Seconds().Do(func() {
+	_, err := s.Every(2).Seconds().Do(func() {
 		err := consumerService.PollEventsQueue()
 		if err != nil {
 			log.Printf("error performing polling on consumer, err: %s\n", err.Error())
