@@ -1,3 +1,4 @@
+//go:generate mockgen -source=dao.go -destination=mocks/mock_dao.go -package=mocks
 package dao
 
 import (
