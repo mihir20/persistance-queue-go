@@ -70,3 +70,12 @@ func (s *Service) UpdatePassengerEvent(taskQueue taskqueue.TaskQueue, oldPasseng
 	}
 	return nil
 }
+
+func (s *Service) CountEventsInQueue() (map[taskqueue.TaskQueue]int64, error) {
+	mp, err := s.eventsDao.CountEventsInQueue(s.registeredTaskQueues)
+	if err != nil {
+		log.Printf("error deleting event, err: %s\n", err.Error())
+		return nil, err
+	}
+	return mp, nil
+}

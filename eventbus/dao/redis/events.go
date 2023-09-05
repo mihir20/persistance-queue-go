@@ -87,3 +87,16 @@ func (c *EventsRedisCache) DeleteEvent(taskQueue taskqueue.TaskQueue, passenger 
 	}
 	return nil
 }
+
+func (c *EventsRedisCache) CountEventsInQueue(taskQueues []taskqueue.TaskQueue) (map[taskqueue.TaskQueue]int64, error) {
+	ctx := context.Background()
+	mp := make(map[taskqueue.TaskQueue]int64)
+	for _, queue := range taskQueues {
+		count, err := c.redisClient.ZCard(ctx, string(queue)).Result()
+		if err != nil {
+			return nil, fmt.Errorf("error getting count for key:%s, err%w", queue, err)
+		}
+		mp[queue] = count
+	}
+	return mp, nil
+}

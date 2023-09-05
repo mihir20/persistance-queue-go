@@ -20,7 +20,7 @@ func main() {
 
 	eventbusService := eventbus.NewService(eventsCache.NewEventsRedisCache(redisClient))
 	consumerService := vendorapiconsumer.NewService()
-	retryStrategy := retrystrategy.NewExponentialBackOffRetryStrategy(3*time.Second, 3)
+	retryStrategy := retrystrategy.NewExponentialBackOffRetryStrategy(1*time.Second, 3)
 	newSubscriber := subscriber.NewSubscriber(2, taskqueueNs.VendorApiConsumerTaskQueue,
 		eventbusService, retryStrategy, consumerService.ConsumeEvent)
 	newSubscriber.StartWorker()

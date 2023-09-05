@@ -24,11 +24,13 @@ func NewService(eventBusService eventbus.IService) *Service {
 
 func (s *Service) HealthCheck(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("received HealthCheck request")
-	_, err := fmt.Fprintf(w, "health persistent queue service")
+	mp, err := s.eventBusService.CountEventsInQueue()
 	if err != nil {
+		log.Printf("failed to get count from queue %s", err.Error())
+		sendJsonResponse(w, nil, http.StatusInternalServerError)
 		return
 	}
-	sendJsonResponse(w, nil, http.StatusOK)
+	sendJsonResponse(w, mp, http.StatusOK)
 }
 
 func (s *Service) PublishEvent(w http.ResponseWriter, r *http.Request) {

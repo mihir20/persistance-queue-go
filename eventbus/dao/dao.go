@@ -11,4 +11,5 @@ type EventsDao interface {
 	GetEvent(taskQueue taskqueue.TaskQueue) (*eventbus.PassengerEvent, int64, error)
 	UpdateEvent(taskQueue taskqueue.TaskQueue, oldPassenger, updatedPassengerEvent *eventbus.PassengerEvent, nextExecutionTime time.Time) error
 	DeleteEvent(taskQueue taskqueue.TaskQueue, event *eventbus.PassengerEvent) error
+	CountEventsInQueue(taskQueues []taskqueue.TaskQueue) (map[taskqueue.TaskQueue]int64, error)
 }
