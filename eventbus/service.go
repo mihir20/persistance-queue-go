@@ -21,7 +21,7 @@ func NewService(eventsDao dao.EventsDao) *Service {
 	return &Service{
 		eventsDao: eventsDao,
 		registeredTaskQueues: []taskqueue.TaskQueue{
-			taskqueueNs.ConsumerTaskQueue,
+			taskqueueNs.SnowflakeConsumerTaskQueue,
 		},
 	}
 }
