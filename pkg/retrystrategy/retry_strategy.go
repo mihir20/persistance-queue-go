@@ -1,3 +1,4 @@
+//go:generate mockgen -source=retry_strategy.go -destination=mocks/mock.go -package=mocks
 package retrystrategy
 
 import "time"
