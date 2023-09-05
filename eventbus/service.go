@@ -22,6 +22,8 @@ func NewService(eventsDao dao.EventsDao) *Service {
 		eventsDao: eventsDao,
 		registeredTaskQueues: []taskqueue.TaskQueue{
 			taskqueueNs.SnowflakeConsumerTaskQueue,
+			taskqueueNs.VendorApiConsumerTaskQueue,
+			taskqueueNs.FileConsumerTaskQueue,
 		},
 	}
 }
