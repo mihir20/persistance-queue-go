@@ -8,5 +8,6 @@ type IService interface {
 }
 
 type PublishEventRequest struct {
-	Name string `json:"name"`
+	UserID  string `json:"userid"`
+	Payload string `json:"payload"`
 }

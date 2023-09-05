@@ -92,7 +92,7 @@ func (s *Subscriber) processEventConsumption(err error, event *eventbus.Passenge
 }
 
 func (s *Subscriber) processTransientFailure(passengerEvent *eventbus.PassengerEvent) error {
-	log.Printf("transient failure while processing event %s\n", passengerEvent.Event.Name)
+	log.Printf("transient failure while processing event %s\n", passengerEvent.Event.UserID)
 	oldPassenger := &eventbus.PassengerEvent{
 		Event:         passengerEvent.Event,
 		RetryAttempts: passengerEvent.RetryAttempts,

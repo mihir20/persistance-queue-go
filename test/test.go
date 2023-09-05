@@ -23,8 +23,9 @@ func SendEvent(w *sync.WaitGroup) {
 	url := "http://localhost:8080/publish"
 	method := "POST"
 	payload := strings.NewReader(fmt.Sprintf(`{
-    "name": "%s"
-}`, uuid.NewString()))
+    "userid": "%s",
+	"payload": "%s"
+}`, uuid.NewString(), uuid.NewString()))
 
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, payload)

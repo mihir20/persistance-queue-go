@@ -3,6 +3,7 @@ package frontend
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -49,7 +50,9 @@ func (s *Service) PublishEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = s.eventBusService.EnqueueEvent(&eventModel.Event{
-		Name:        publishReq.Name,
+		EventId:     uuid.NewString(),
+		UserID:      publishReq.UserID,
+		Payload:     publishReq.Payload,
 		PublishedAt: time.Now(),
 	})
 	if err != nil {

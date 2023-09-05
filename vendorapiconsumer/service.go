@@ -14,6 +14,6 @@ func NewService() *Service {
 }
 
 func (s *Service) ConsumeEvent(event *eventbus.PassengerEvent) error {
-	log.Printf("consuming event %s\n", event.Event.Name)
+	log.Printf("consuming event %s\n", event.Event.UserID)
 	return errors.ErrTransientFailure
 }

@@ -29,7 +29,7 @@ func NewService(eventsDao dao.EventsDao) *Service {
 }
 
 func (s *Service) EnqueueEvent(event *event.Event) error {
-	fmt.Printf("enqueuing new event in the bus, name: %s\n", event.Name)
+	fmt.Printf("enqueuing new event in the bus, userid: %s\n", event.UserID)
 	err := s.eventsDao.CreateEvent(&eventbus.PassengerEvent{
 		Event:         event,
 		RetryAttempts: 0,

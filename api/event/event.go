@@ -3,6 +3,8 @@ package event
 import "time"
 
 type Event struct {
-	Name        string `json:"name"`
+	EventId     string
+	UserID      string
+	Payload     string
 	PublishedAt time.Time
 }
