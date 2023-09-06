@@ -5,6 +5,7 @@ import (
 	"persistent-queue/api/eventbus"
 	"persistent-queue/api/taskqueue"
 	"persistent-queue/pkg/errors"
+	"persistent-queue/pkg/goroutine"
 	"persistent-queue/pkg/retrystrategy"
 )
 
@@ -33,8 +34,9 @@ func (p *BatchEventProcessor) PollAndProcessEvents(consumerMethod func(event *ev
 	}
 	if events != nil && len(events) > 0 {
 		for _, event := range events {
-			err = consumerMethod(event)
-			p.processEventConsumption(err, event)
+			goroutine.Run(func() {
+				p.processEvent(event, consumerMethod)
+			})
 		}
 	} else {
 		log.Printf("no event to process\n")
@@ -42,7 +44,12 @@ func (p *BatchEventProcessor) PollAndProcessEvents(consumerMethod func(event *ev
 	return nil
 }
 
-func (p *BatchEventProcessor) processEventConsumption(err error, event *eventbus.PassengerEvent) {
+func (p *BatchEventProcessor) processEvent(event *eventbus.PassengerEvent, consumerMethod func(event *eventbus.PassengerEvent) error) {
+	err := consumerMethod(event)
+	p.processEventConsumptionResponse(err, event)
+}
+
+func (p *BatchEventProcessor) processEventConsumptionResponse(err error, event *eventbus.PassengerEvent) {
 	if err == nil || errors.IsPermanentError(err) {
 		deleteErr := p.eventBusService.DequeueEventFromTaskQueue(p.taskQueue, event)
 		if deleteErr != nil {

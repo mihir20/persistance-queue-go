@@ -11,12 +11,8 @@ import (
 )
 
 type Subscriber struct {
-	numberOfWorkers int
 	// time to poll the queue in seconds
 	pollingFrequency int
-	taskQueue        taskqueue.TaskQueue
-	eventBusService  eventbus.IService
-	retryStrategy    retrystrategy.IRetryStrategy
 	consumeFunction  func(*eventbus.PassengerEvent) error
 	eventProcessor   eventprocessor.IEventProcessor
 }
@@ -24,11 +20,7 @@ type Subscriber struct {
 func NewSubscriber(numberOfWorkers, pollingFrequency int, taskQueue taskqueue.TaskQueue, eventBusService eventbus.IService,
 	retryStrategy retrystrategy.IRetryStrategy, consumeFunction func(*eventbus.PassengerEvent) error) *Subscriber {
 	return &Subscriber{
-		numberOfWorkers:  numberOfWorkers,
 		pollingFrequency: pollingFrequency,
-		taskQueue:        taskQueue,
-		eventBusService:  eventBusService,
-		retryStrategy:    retryStrategy,
 		consumeFunction:  consumeFunction,
 		eventProcessor:   eventprocessor.NewBatchEventProcessor(numberOfWorkers, taskQueue, eventBusService, retryStrategy),
 	}

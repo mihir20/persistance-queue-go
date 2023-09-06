@@ -32,7 +32,7 @@ func main() {
 	eventbusService := eventbus.NewService(eventsCache.NewEventsRedisCache(redisClient))
 	consumerService := snowflakeconsumer.NewService(eventbusService)
 	retryStrategy := retrystrategy.NewExponentialBackOffRetryStrategy(3*time.Second, 3)
-	newSubscriber := subscriber.NewSubscriber(2, taskqueueNs.SnowflakeConsumerTaskQueue,
+	newSubscriber := subscriber.NewSubscriber(2, 2, taskqueueNs.SnowflakeConsumerTaskQueue,
 		eventbusService, retryStrategy, consumerService.ConsumeEvent)
 	newSubscriber.StartWorker()
 }

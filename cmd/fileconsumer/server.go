@@ -32,7 +32,7 @@ func main() {
 	eventbusService := eventbus.NewService(eventsCache.NewEventsRedisCache(redisClient))
 	consumerService := fileconsumer.NewService()
 	retryStrategy := retrystrategy.NewExponentialBackOffRetryStrategy(3*time.Second, 3)
-	newSubscriber := subscriber.NewSubscriber(2, taskqueueNs.FileConsumerTaskQueue,
+	newSubscriber := subscriber.NewSubscriber(2, 2, taskqueueNs.FileConsumerTaskQueue,
 		eventbusService, retryStrategy, consumerService.ConsumeEvent)
 	newSubscriber.StartWorker()
 }
