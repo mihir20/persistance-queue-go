@@ -6,26 +6,22 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"sync"
 )
 
 func main() {
-	var w sync.WaitGroup
-	for i := 0; i < 10; i++ {
-		w.Add(1)
-		go SendEvent(&w)
+	for i := 0; i < 100; i++ {
+		SendEvent(i)
 	}
-	w.Wait()
 }
 
-func SendEvent(w *sync.WaitGroup) {
-	defer w.Done()
+func SendEvent(i int) {
+	// defer w.Done()
 	url := "http://localhost:8080/publish"
 	method := "POST"
 	payload := strings.NewReader(fmt.Sprintf(`{
-    "userid": "%s",
+    "userid": "%v",
 	"payload": "%s"
-}`, uuid.NewString(), uuid.NewString()))
+}`, i, uuid.NewString()))
 
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, payload)
