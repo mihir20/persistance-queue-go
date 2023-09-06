@@ -3,35 +3,35 @@ package subscriber
 import (
 	"github.com/go-co-op/gocron"
 	"log"
-	"math"
 	"persistent-queue/api/eventbus"
 	"persistent-queue/api/taskqueue"
 	"persistent-queue/pkg/errors"
+	"persistent-queue/pkg/eventprocessor"
 	"persistent-queue/pkg/retrystrategy"
 	"time"
 )
 
-const (
-	minPollingFrequency = 1
-)
-
 type Subscriber struct {
+	numberOfWorkers int
 	// time to poll the queue in seconds
 	pollingFrequency int
 	taskQueue        taskqueue.TaskQueue
 	eventBusService  eventbus.IService
 	retryStrategy    retrystrategy.IRetryStrategy
 	consumeFunction  func(*eventbus.PassengerEvent) error
+	eventProcessor   eventprocessor.IEventProcessor
 }
 
-func NewSubscriber(pollingFrequency int, taskQueue taskqueue.TaskQueue, eventBusService eventbus.IService,
+func NewSubscriber(numberOfWorkers, pollingFrequency int, taskQueue taskqueue.TaskQueue, eventBusService eventbus.IService,
 	retryStrategy retrystrategy.IRetryStrategy, consumeFunction func(*eventbus.PassengerEvent) error) *Subscriber {
 	return &Subscriber{
-		pollingFrequency: int(math.Max(float64(pollingFrequency), minPollingFrequency)),
+		numberOfWorkers:  numberOfWorkers,
+		pollingFrequency: pollingFrequency,
 		taskQueue:        taskQueue,
 		eventBusService:  eventBusService,
 		retryStrategy:    retryStrategy,
 		consumeFunction:  consumeFunction,
+		eventProcessor:   eventprocessor.NewBatchEventProcessor(numberOfWorkers, taskQueue, eventBusService, retryStrategy),
 	}
 }
 
@@ -54,14 +54,16 @@ func (s *Subscriber) StartWorker() {
 }
 
 func (s *Subscriber) pollAndConsumeEvents() error {
-	event, err := s.eventBusService.GetEventToProcess(s.taskQueue)
+	events, err := s.eventBusService.GetEventsToProcess(s.taskQueue, int64(s.numberOfWorkers))
 	if err != nil {
 		log.Printf("error while polling for event, err:%s\n", err.Error())
 		return err
 	}
-	if event != nil {
-		err = s.consumeEvent(event)
-		s.processEventConsumption(err, event)
+	if events != nil && len(events) > 0 {
+		for _, event := range events {
+			err = s.consumeEvent(event)
+			s.processEventConsumption(err, event)
+		}
 	} else {
 		log.Printf("no event to process\n")
 	}

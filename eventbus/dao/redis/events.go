@@ -8,6 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"persistent-queue/api/eventbus"
 	"persistent-queue/api/taskqueue"
+	"strconv"
 	"time"
 )
 
@@ -39,20 +40,28 @@ func (c *EventsRedisCache) CreateEvent(passenger *eventbus.PassengerEvent, taskQ
 	return nil
 }
 
-func (c *EventsRedisCache) GetEvent(taskQueue taskqueue.TaskQueue) (*eventbus.PassengerEvent, int64, error) {
-	eventStr, err := c.redisClient.ZRangeWithScores(context.Background(), string(taskQueue), 0, 0).Result()
+func (c *EventsRedisCache) GetEvents(taskQueue taskqueue.TaskQueue, cutOffTime time.Time, countOfEvents int64) ([]*eventbus.PassengerEvent, error) {
+	eventStr, err := c.redisClient.ZRangeByScoreWithScores(context.Background(), string(taskQueue), &redis.ZRangeBy{
+		Min:   "0",
+		Max:   strconv.FormatInt(cutOffTime.Unix(), 10),
+		Count: countOfEvents,
+	}).Result()
 	if err != nil && !errors.Is(err, redis.Nil) {
-		return nil, 0, fmt.Errorf("error while fetching event from queue, %w", err)
+		return nil, fmt.Errorf("error while fetching event from queue, %w", err)
 	}
 	if errors.Is(err, redis.Nil) || len(eventStr) == 0 {
-		return nil, 0, nil
+		return nil, nil
 	}
-	event := &eventbus.PassengerEvent{}
-	err = json.Unmarshal([]byte(eventStr[0].Member.(string)), event)
-	if err != nil {
-		return nil, 0, fmt.Errorf("error while unmarshalling, eventStr: %v ,err: %w", eventStr, err)
+	events := make([]*eventbus.PassengerEvent, len(eventStr))
+	for i, element := range eventStr {
+		event := &eventbus.PassengerEvent{}
+		err = json.Unmarshal([]byte(element.Member.(string)), event)
+		if err != nil {
+			return nil, fmt.Errorf("error while unmarshalling, eventStr: %v ,err: %w", eventStr, err)
+		}
+		events[i] = event
 	}
-	return event, int64(eventStr[0].Score), nil
+	return events, nil
 }
 
 func (c *EventsRedisCache) UpdateEvent(taskQueue taskqueue.TaskQueue, oldPassenger, updatedPassengerEvent *eventbus.PassengerEvent, nextExecutionTime time.Time) error {

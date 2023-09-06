@@ -41,16 +41,13 @@ func (s *Service) EnqueueEvent(event *event.Event) error {
 	return err
 }
 
-func (s *Service) GetEventToProcess(taskQueue taskqueue.TaskQueue) (*eventbus.PassengerEvent, error) {
-	savedEvent, executionTimestamp, err := s.eventsDao.GetEvent(taskQueue)
+func (s *Service) GetEventsToProcess(taskQueue taskqueue.TaskQueue, countOfElements int64) ([]*eventbus.PassengerEvent, error) {
+	events, err := s.eventsDao.GetEvents(taskQueue, time.Now(), countOfElements)
 	if err != nil {
 		log.Printf("error getting event, err: %s\n", err.Error())
 		return nil, err
 	}
-	if time.Now().Before(time.Unix(executionTimestamp, 0).UTC()) {
-		return nil, nil
-	}
-	return savedEvent, nil
+	return events, nil
 }
 
 func (s *Service) DequeueEventFromTaskQueue(taskQueue taskqueue.TaskQueue, passengerEvent *eventbus.PassengerEvent) error {

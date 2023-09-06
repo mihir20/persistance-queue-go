@@ -129,7 +129,6 @@ func TestService_DequeueEventFromTaskQueue(t *testing.T) {
 }
 
 func TestService_GetEventToProcess(t *testing.T) {
-	ctrl := gomock.NewController(t)
 	type args struct {
 		taskQueue taskqueue.TaskQueue
 	}
@@ -137,7 +136,7 @@ func TestService_GetEventToProcess(t *testing.T) {
 		name      string
 		setupMock func(dependencies *mockDependencies)
 		args      args
-		want      *eventbus.PassengerEvent
+		want      []*eventbus.PassengerEvent
 		wantErr   bool
 	}{
 		{
@@ -147,10 +146,10 @@ func TestService_GetEventToProcess(t *testing.T) {
 			},
 			setupMock: func(dependencies *mockDependencies) {
 				dependencies.eventsDao.EXPECT().
-					GetEvent(taskqueueNs.VendorApiConsumerTaskQueue).
-					Return(samplePassengerEvent, time.Now().Unix(), nil)
+					GetEvents(taskqueueNs.VendorApiConsumerTaskQueue, gomock.Any(), int64(2)).
+					Return([]*eventbus.PassengerEvent{samplePassengerEvent}, nil)
 			},
-			want:    samplePassengerEvent,
+			want:    []*eventbus.PassengerEvent{samplePassengerEvent},
 			wantErr: false,
 		},
 		{
@@ -160,35 +159,24 @@ func TestService_GetEventToProcess(t *testing.T) {
 			},
 			setupMock: func(dependencies *mockDependencies) {
 				dependencies.eventsDao.EXPECT().
-					GetEvent(taskqueueNs.VendorApiConsumerTaskQueue).
-					Return(nil, int64(0), errors.New("failed to connect"))
+					GetEvents(taskqueueNs.VendorApiConsumerTaskQueue, gomock.Any(), int64(2)).
+					Return(nil, errors.New("failed to connect"))
 			},
 			wantErr: true,
-		},
-		{
-			name: "found non processable data in db",
-			args: args{
-				taskQueue: taskqueueNs.VendorApiConsumerTaskQueue,
-			},
-			setupMock: func(dependencies *mockDependencies) {
-				dependencies.eventsDao.EXPECT().
-					GetEvent(taskqueueNs.VendorApiConsumerTaskQueue).
-					Return(samplePassengerEvent, time.Now().Add(2*time.Hour).Unix(), nil)
-			},
-			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
 			s, md := newMockEventBusService(ctrl)
 			tt.setupMock(md)
-			got, err := s.GetEventToProcess(tt.args.taskQueue)
+			got, err := s.GetEventsToProcess(tt.args.taskQueue, int64(2))
 			if (err != nil) != tt.wantErr {
-				t.Errorf("GetEventToProcess() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("GetEventsToProcess() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetEventToProcess() got = %v, want %v", got, tt.want)
+				t.Errorf("GetEventsToProcess() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

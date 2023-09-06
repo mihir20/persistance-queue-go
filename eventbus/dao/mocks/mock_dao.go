@@ -79,20 +79,19 @@ func (mr *MockEventsDaoMockRecorder) DeleteEvent(taskQueue, event interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEvent", reflect.TypeOf((*MockEventsDao)(nil).DeleteEvent), taskQueue, event)
 }
 
-// GetEvent mocks base method.
-func (m *MockEventsDao) GetEvent(taskQueue taskqueue.TaskQueue) (*eventbus.PassengerEvent, int64, error) {
+// GetEvents mocks base method.
+func (m *MockEventsDao) GetEvents(taskQueue taskqueue.TaskQueue, cutOffTime time.Time, countOfEvents int64) ([]*eventbus.PassengerEvent, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEvent", taskQueue)
-	ret0, _ := ret[0].(*eventbus.PassengerEvent)
-	ret1, _ := ret[1].(int64)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret := m.ctrl.Call(m, "GetEvents", taskQueue, cutOffTime, countOfEvents)
+	ret0, _ := ret[0].([]*eventbus.PassengerEvent)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// GetEvent indicates an expected call of GetEvent.
-func (mr *MockEventsDaoMockRecorder) GetEvent(taskQueue interface{}) *gomock.Call {
+// GetEvents indicates an expected call of GetEvents.
+func (mr *MockEventsDaoMockRecorder) GetEvents(taskQueue, cutOffTime, countOfEvents interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvent", reflect.TypeOf((*MockEventsDao)(nil).GetEvent), taskQueue)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvents", reflect.TypeOf((*MockEventsDao)(nil).GetEvents), taskQueue, cutOffTime, countOfEvents)
 }
 
 // UpdateEvent mocks base method.

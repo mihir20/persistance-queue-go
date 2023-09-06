@@ -80,19 +80,19 @@ func (mr *MockIServiceMockRecorder) EnqueueEvent(event interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnqueueEvent", reflect.TypeOf((*MockIService)(nil).EnqueueEvent), event)
 }
 
-// GetEventToProcess mocks base method.
-func (m *MockIService) GetEventToProcess(queue taskqueue.TaskQueue) (*eventbus.PassengerEvent, error) {
+// GetEventsToProcess mocks base method.
+func (m *MockIService) GetEventsToProcess(taskQueue taskqueue.TaskQueue, countOfElements int64) ([]*eventbus.PassengerEvent, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEventToProcess", queue)
-	ret0, _ := ret[0].(*eventbus.PassengerEvent)
+	ret := m.ctrl.Call(m, "GetEventsToProcess", taskQueue, countOfElements)
+	ret0, _ := ret[0].([]*eventbus.PassengerEvent)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetEventToProcess indicates an expected call of GetEventToProcess.
-func (mr *MockIServiceMockRecorder) GetEventToProcess(queue interface{}) *gomock.Call {
+// GetEventsToProcess indicates an expected call of GetEventsToProcess.
+func (mr *MockIServiceMockRecorder) GetEventsToProcess(taskQueue, countOfElements interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventToProcess", reflect.TypeOf((*MockIService)(nil).GetEventToProcess), queue)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventsToProcess", reflect.TypeOf((*MockIService)(nil).GetEventsToProcess), taskQueue, countOfElements)
 }
 
 // UpdatePassengerEvent mocks base method.
