@@ -5,7 +5,6 @@ import (
 	"log"
 	"persistent-queue/api/eventbus"
 	"persistent-queue/api/taskqueue"
-	"persistent-queue/pkg/errors"
 	"persistent-queue/pkg/eventprocessor"
 	"persistent-queue/pkg/retrystrategy"
 	"time"
@@ -54,64 +53,5 @@ func (s *Subscriber) StartWorker() {
 }
 
 func (s *Subscriber) pollAndConsumeEvents() error {
-	events, err := s.eventBusService.GetEventsToProcess(s.taskQueue, int64(s.numberOfWorkers))
-	if err != nil {
-		log.Printf("error while polling for event, err:%s\n", err.Error())
-		return err
-	}
-	if events != nil && len(events) > 0 {
-		for _, event := range events {
-			err = s.consumeEvent(event)
-			s.processEventConsumption(err, event)
-		}
-	} else {
-		log.Printf("no event to process\n")
-	}
-	return nil
-}
-
-func (s *Subscriber) consumeEvent(event *eventbus.PassengerEvent) error {
-	return s.consumeFunction(event)
-}
-
-func (s *Subscriber) processEventConsumption(err error, event *eventbus.PassengerEvent) {
-	if err == nil || errors.IsPermanentError(err) {
-		deleteErr := s.eventBusService.DequeueEventFromTaskQueue(s.taskQueue, event)
-		if deleteErr != nil {
-			log.Printf("failed to delete event from queue, err:%s", deleteErr.Error())
-		}
-		return
-	}
-	if errors.IsTransientError(err) {
-		processErr := s.processTransientFailure(event)
-		if processErr != nil {
-			log.Printf("failed to process transient failure, err:%s", processErr.Error())
-		}
-		return
-	}
-
-	log.Fatalf("unknown error from snowflakeconsumer, err: %s", err.Error())
-}
-
-func (s *Subscriber) processTransientFailure(passengerEvent *eventbus.PassengerEvent) error {
-	log.Printf("transient failure while processing event %s\n", passengerEvent.Event.UserID)
-	oldPassenger := &eventbus.PassengerEvent{
-		Event:         passengerEvent.Event,
-		RetryAttempts: passengerEvent.RetryAttempts,
-		EventTime:     passengerEvent.EventTime,
-	}
-	if s.retryStrategy.IsMaxRetryMet(passengerEvent.RetryAttempts + 1) {
-		err := s.eventBusService.DequeueEventFromTaskQueue(s.taskQueue, passengerEvent)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-	passengerEvent.RetryAttempts++
-	nextExecutionTime := s.retryStrategy.GetNextRetryTime(passengerEvent.RetryAttempts, passengerEvent.EventTime)
-	err := s.eventBusService.UpdatePassengerEvent(s.taskQueue, oldPassenger, passengerEvent, nextExecutionTime)
-	if err != nil {
-		return err
-	}
-	return nil
+	return s.eventProcessor.PollAndProcessEvents(s.consumeFunction)
 }
