@@ -14,6 +14,7 @@ A distributed persistent queue is a data structure used in distributed computing
 
 ## Getting Started
 
+---
 ### Pre-requisites
 Need to have go1.18+ and docker installed on your system
 
@@ -39,6 +40,7 @@ For demo purposes we have setup `3` demo consumers
         ```
 ## APIs 
 
+---
 ### 1. Healthcheck
 ```http
 GET /healthcheck
