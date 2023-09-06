@@ -8,7 +8,6 @@ import (
 	"github.com/redis/go-redis/v9"
 	"persistent-queue/api/eventbus"
 	"persistent-queue/api/taskqueue"
-	"strconv"
 	"time"
 )
 
@@ -29,7 +28,7 @@ func (c *EventsRedisCache) CreateEvent(passenger *eventbus.PassengerEvent, taskQ
 	pipeline := c.redisClient.Pipeline()
 	for _, queue := range taskQueues {
 		pipeline.ZAdd(ctx, string(queue), redis.Z{
-			Score:  float64(passenger.EventTime.Unix()),
+			Score:  float64(passenger.EventTime.UnixNano()),
 			Member: bytes,
 		})
 	}
@@ -41,10 +40,12 @@ func (c *EventsRedisCache) CreateEvent(passenger *eventbus.PassengerEvent, taskQ
 }
 
 func (c *EventsRedisCache) GetEvents(taskQueue taskqueue.TaskQueue, cutOffTime time.Time, countOfEvents int64) ([]*eventbus.PassengerEvent, error) {
-	eventStr, err := c.redisClient.ZRangeByScoreWithScores(context.Background(), string(taskQueue), &redis.ZRangeBy{
-		Min:   "0",
-		Max:   strconv.FormatInt(cutOffTime.Unix(), 10),
-		Count: countOfEvents,
+	eventStr, err := c.redisClient.ZRangeArgsWithScores(context.Background(), redis.ZRangeArgs{
+		Key:     string(taskQueue),
+		Start:   0,
+		Stop:    cutOffTime.UnixNano(),
+		ByScore: true,
+		Count:   countOfEvents,
 	}).Result()
 	if err != nil && !errors.Is(err, redis.Nil) {
 		return nil, fmt.Errorf("error while fetching event from queue, %w", err)
@@ -74,7 +75,7 @@ func (c *EventsRedisCache) UpdateEvent(taskQueue taskqueue.TaskQueue, oldPasseng
 	pipeline := c.redisClient.Pipeline()
 	pipeline.ZRem(ctx, string(taskQueue), oldBytes)
 	pipeline.ZAdd(ctx, string(taskQueue), redis.Z{
-		Score:  float64(nextExecutionTime.Unix()),
+		Score:  float64(nextExecutionTime.UnixNano()),
 		Member: newBytes,
 	})
 	_, err = pipeline.Exec(ctx)
