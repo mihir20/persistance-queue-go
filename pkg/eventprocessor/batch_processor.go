@@ -7,6 +7,7 @@ import (
 	"persistent-queue/pkg/errors"
 	"persistent-queue/pkg/goroutine"
 	"persistent-queue/pkg/retrystrategy"
+	"sync"
 )
 
 type BatchEventProcessor struct {
@@ -33,11 +34,16 @@ func (p *BatchEventProcessor) PollAndProcessEvents(consumerMethod func(event *ev
 		return err
 	}
 	if events != nil && len(events) > 0 {
+		var wg sync.WaitGroup
+		wg.Add(len(events))
 		for _, event := range events {
+			localEvent := event
 			goroutine.Run(func() {
-				p.processEvent(event, consumerMethod)
+				p.processEvent(localEvent, consumerMethod)
+				wg.Done()
 			})
 		}
+		wg.Wait()
 	} else {
 		log.Printf("no event to process\n")
 	}
