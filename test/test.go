@@ -44,5 +44,5 @@ func SendEvent(i int) {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(string(body))
+	fmt.Printf("%d: %s\n", i+1, string(body))
 }

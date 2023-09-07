@@ -24,8 +24,11 @@ Need to have go1.18+ and docker installed on your system
 docker-compose up frontend
 ```
 this will start frontend server at `localhost` port `8080`
+
 2. Running Consumers
-For demo purposes we have setup `3` demo consumers
+
+   For demo purposes we have setup `3` demo consumers
+
    1. Snowflake Consumer (All the events will be successfully consumed by this consumer)
         ```shell
         docker-compose up snowflake-api-consumer
