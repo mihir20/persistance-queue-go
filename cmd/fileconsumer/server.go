@@ -7,9 +7,9 @@ import (
 	"persistent-queue/eventbus"
 	eventsCache "persistent-queue/eventbus/dao/redis"
 	"persistent-queue/fileconsumer"
-	"persistent-queue/pkg/retrystrategy"
-	"persistent-queue/pkg/subscriber"
 	taskqueueNs "persistent-queue/pkg/taskqueue"
+	"persistent-queue/retrystrategy"
+	"persistent-queue/subscriber"
 	"time"
 )
 

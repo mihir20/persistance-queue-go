@@ -3,7 +3,7 @@ package eventprocessor
 import (
 	"persistent-queue/api/eventbus"
 	"persistent-queue/api/taskqueue"
-	"persistent-queue/pkg/retrystrategy"
+	"persistent-queue/retrystrategy"
 	"testing"
 )
 

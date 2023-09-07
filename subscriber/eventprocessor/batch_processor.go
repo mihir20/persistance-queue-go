@@ -6,7 +6,7 @@ import (
 	"persistent-queue/api/taskqueue"
 	"persistent-queue/pkg/errors"
 	"persistent-queue/pkg/goroutine"
-	"persistent-queue/pkg/retrystrategy"
+	"persistent-queue/retrystrategy"
 	"sync"
 )
 
