@@ -6,6 +6,7 @@ import (
 	"persistent-queue/api/eventbus"
 	"persistent-queue/api/taskqueue"
 	"persistent-queue/retrystrategy"
+	"persistent-queue/subscriber/consumer"
 	eventprocessor2 "persistent-queue/subscriber/eventprocessor"
 	"time"
 )
@@ -13,7 +14,6 @@ import (
 type Subscriber struct {
 	// time to poll the queue in seconds
 	pollingFrequency int
-	consumeFunction  func(*eventbus.PassengerEvent) error
 	eventProcessor   eventprocessor2.IEventProcessor
 }
 
@@ -21,8 +21,7 @@ func NewSubscriber(numberOfWorkers, pollingFrequency int, taskQueue taskqueue.Ta
 	retryStrategy retrystrategy.IRetryStrategy, consumeFunction func(*eventbus.PassengerEvent) error) *Subscriber {
 	return &Subscriber{
 		pollingFrequency: pollingFrequency,
-		consumeFunction:  consumeFunction,
-		eventProcessor:   eventprocessor2.NewBatchEventProcessor(numberOfWorkers, taskQueue, eventBusService, retryStrategy),
+		eventProcessor:   eventprocessor2.NewBatchEventProcessor(numberOfWorkers, taskQueue, eventBusService, retryStrategy, consumer.NewConsumer(consumeFunction)),
 	}
 }
 
@@ -45,5 +44,5 @@ func (s *Subscriber) StartWorker() {
 }
 
 func (s *Subscriber) pollAndConsumeEvents() error {
-	return s.eventProcessor.PollAndProcessEvents(s.consumeFunction)
+	return s.eventProcessor.PollAndProcessEvents()
 }

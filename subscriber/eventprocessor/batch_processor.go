@@ -7,6 +7,7 @@ import (
 	"persistent-queue/pkg/errors"
 	"persistent-queue/pkg/goroutine"
 	"persistent-queue/retrystrategy"
+	"persistent-queue/subscriber/consumer"
 	"sync"
 )
 
@@ -15,19 +16,22 @@ type BatchEventProcessor struct {
 	taskQueue       taskqueue.TaskQueue
 	eventBusService eventbus.IService
 	retryStrategy   retrystrategy.IRetryStrategy
+	consumer        consumer.IConsumer
 }
 
 func NewBatchEventProcessor(batchSize int, taskQueue taskqueue.TaskQueue,
-	eventBusService eventbus.IService, retryStrategy retrystrategy.IRetryStrategy) *BatchEventProcessor {
+	eventBusService eventbus.IService, retryStrategy retrystrategy.IRetryStrategy,
+	consumer consumer.IConsumer) *BatchEventProcessor {
 	return &BatchEventProcessor{
 		batchSize:       batchSize,
 		taskQueue:       taskQueue,
 		eventBusService: eventBusService,
 		retryStrategy:   retryStrategy,
+		consumer:        consumer,
 	}
 }
 
-func (p *BatchEventProcessor) PollAndProcessEvents(consumerMethod func(event *eventbus.PassengerEvent) error) error {
+func (p *BatchEventProcessor) PollAndProcessEvents() error {
 	events, err := p.eventBusService.GetEventsToProcess(p.taskQueue, int64(p.batchSize))
 	if err != nil {
 		log.Printf("error while polling for event, err:%s\n", err.Error())
@@ -39,7 +43,7 @@ func (p *BatchEventProcessor) PollAndProcessEvents(consumerMethod func(event *ev
 		for _, event := range events {
 			localEvent := event
 			goroutine.Run(func() {
-				p.processEvent(localEvent, consumerMethod)
+				p.processEvent(localEvent, p.consumer.Consume)
 				wg.Done()
 			})
 		}
