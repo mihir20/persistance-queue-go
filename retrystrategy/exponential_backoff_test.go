@@ -21,7 +21,42 @@ func TestExponentialBackOffRetryStrategy_GetNextRetryTime(t *testing.T) {
 		args   args
 		want   time.Time
 	}{
-		// TODO: Add test cases.
+		{
+			name: "1st retry",
+			fields: fields{
+				baseInterval: 2 * time.Second,
+				maxAttempts:  3,
+			},
+			args: args{
+				nextAttemptNumber:  1,
+				eventPublishedTime: time.Unix(1000000, 0),
+			},
+			want: time.Unix(1000004, 0),
+		},
+		{
+			name: "2nd retry",
+			fields: fields{
+				baseInterval: 2 * time.Second,
+				maxAttempts:  3,
+			},
+			args: args{
+				nextAttemptNumber:  2,
+				eventPublishedTime: time.Unix(1000000, 0),
+			},
+			want: time.Unix(1000008, 0),
+		},
+		{
+			name: "3rd retry",
+			fields: fields{
+				baseInterval: 2 * time.Second,
+				maxAttempts:  3,
+			},
+			args: args{
+				nextAttemptNumber:  3,
+				eventPublishedTime: time.Unix(1000000, 0),
+			},
+			want: time.Unix(1000016, 0),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -50,7 +85,39 @@ func TestExponentialBackOffRetryStrategy_IsMaxRetryMet(t *testing.T) {
 		args   args
 		want   bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "first retry out of 3",
+			fields: fields{
+				baseInterval: 2 * time.Second,
+				maxAttempts:  3,
+			},
+			args: args{
+				retryCount: 1,
+			},
+			want: false,
+		},
+		{
+			name: "second retry out of 3",
+			fields: fields{
+				baseInterval: 2 * time.Second,
+				maxAttempts:  3,
+			},
+			args: args{
+				retryCount: 2,
+			},
+			want: false,
+		},
+		{
+			name: "second retry out of 3",
+			fields: fields{
+				baseInterval: 2 * time.Second,
+				maxAttempts:  3,
+			},
+			args: args{
+				retryCount: 3,
+			},
+			want: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
