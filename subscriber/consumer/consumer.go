@@ -3,6 +3,7 @@ package consumer
 
 import "persistent-queue/api/eventbus"
 
+// IConsumer knows how to consume an event
 type IConsumer interface {
 	Consume(event *eventbus.PassengerEvent) error
 }

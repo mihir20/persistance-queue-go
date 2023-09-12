@@ -34,5 +34,6 @@ func main() {
 	retryStrategy := retrystrategy.NewExponentialBackOffRetryStrategy(3*time.Second, 3)
 	newSubscriber := subscriber.NewSubscriber(2, 2, taskqueueNs.FileConsumerTaskQueue,
 		eventbusService, retryStrategy, consumerService.ConsumeEvent)
+	// init worker
 	newSubscriber.StartWorker()
 }

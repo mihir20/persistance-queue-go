@@ -63,6 +63,7 @@ func (s *Service) PublishEvent(w http.ResponseWriter, r *http.Request) {
 	sendJsonResponse(w, "published event", http.StatusOK)
 }
 
+// sendJsonResponse updates the header with a httpStatusCode and response body
 func sendJsonResponse(w http.ResponseWriter, resp interface{}, httpStatusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(httpStatusCode)
