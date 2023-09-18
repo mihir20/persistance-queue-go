@@ -25,7 +25,7 @@ func (c *EventsRedisCache) CreateEvent(passenger *eventbus.PassengerEvent, taskQ
 	if err != nil {
 		return err
 	}
-	pipeline := c.redisClient.Pipeline()
+	pipeline := c.redisClient.TxPipeline()
 	for _, queue := range taskQueues {
 		pipeline.ZAdd(ctx, string(queue), redis.Z{
 			Score:  float64(passenger.EventTime.UnixNano()),
@@ -38,6 +38,11 @@ func (c *EventsRedisCache) CreateEvent(passenger *eventbus.PassengerEvent, taskQ
 	}
 	return nil
 }
+
+// 12 batch - 2
+
+// tq1 2 3 4 5 9 10 14
+// tq2 4 5
 
 func (c *EventsRedisCache) GetEvents(taskQueue taskqueue.TaskQueue, cutOffTime time.Time, countOfEvents int64) ([]*eventbus.PassengerEvent, error) {
 	eventStr, err := c.redisClient.ZRangeArgsWithScores(context.Background(), redis.ZRangeArgs{
@@ -72,7 +77,7 @@ func (c *EventsRedisCache) UpdateEvent(taskQueue taskqueue.TaskQueue, oldPasseng
 		return err
 	}
 	newBytes, err := json.Marshal(updatedPassengerEvent)
-	pipeline := c.redisClient.Pipeline()
+	pipeline := c.redisClient.TxPipeline()
 	pipeline.ZRem(ctx, string(taskQueue), oldBytes)
 	pipeline.ZAdd(ctx, string(taskQueue), redis.Z{
 		Score:  float64(nextExecutionTime.UnixNano()),

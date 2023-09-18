@@ -30,7 +30,7 @@ func (s *Subscriber) StartWorker() {
 
 	// Every starts the job immediately and then runs at the
 	// specified interval
-	_, err := scheduler.Every(2).Seconds().Do(func() {
+	_, err := scheduler.Every(s.pollingFrequency).Seconds().Do(func() {
 		err := s.pollAndConsumeEvents()
 		if err != nil {
 			log.Printf("error performing polling on snowflakeconsumer, err: %s\n", err.Error())
